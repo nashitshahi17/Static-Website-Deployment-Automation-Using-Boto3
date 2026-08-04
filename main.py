@@ -1,4 +1,4 @@
-from src.config import BUCKET_NAME
+from src.config import create_bucket_name
 from src.s3_manager import S3Manager
 # import boto3
 # def main():
@@ -13,6 +13,7 @@ from src.s3_manager import S3Manager
 
 def main():
     manager = S3Manager()
+    BUCKET_NAME = create_bucket_name()
     manager.create_bucket(BUCKET_NAME)
 
 if __name__ == "__main__":
