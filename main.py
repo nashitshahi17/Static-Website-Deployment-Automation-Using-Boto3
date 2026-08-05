@@ -17,7 +17,7 @@ def main():
     manager = S3Manager()
     manager.create_bucket(BUCKET_NAME)
     manager.configure_public_access(BUCKET_NAME)
-    manager.apply_public_bucket_policy(BUCKET_NAME)
+    manager.apply_bucket_policy(BUCKET_NAME)
     manager.enable_static_website(BUCKET_NAME)
     uploader = WebsiteUploader(manager.s3)
     uploader.upload_directory(BUCKET_NAME,"website")

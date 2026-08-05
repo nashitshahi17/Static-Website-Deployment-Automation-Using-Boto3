@@ -1,8 +1,8 @@
 import boto3
-import json
 from botocore.exceptions import ClientError
 from .logger import logger
 from .validators import validate_bucket_name
+from .policy import generate_public_read_policy
 
 from .config import AWS_REGION
 
@@ -73,25 +73,18 @@ class S3Manager:
             logger.error(e)
             raise
 
-    def apply_public_bucket_policy(self,bucket_name):
-        policy = {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Sid": "PublicReadGetObject",
-                    "Effect": "Allow",
-                    "Principal": "*",
-                    "Action": "s3:GetObject",
-                    "Resource": f"arn:aws:s3:::{bucket_name}/*"
-                }
-            ]
-        }
+    def apply_bucket_policy(self, bucket_name):
+
         try:
+            policy = generate_public_read_policy(bucket_name)
+
             self.s3.put_bucket_policy(
-                Bucket = bucket_name,
-                Policy = json.dumps(policy)
+                Bucket=bucket_name,
+                Policy=policy
             )
-            logger.info("Public bucket policy applied successfully")
+
+            logger.info("Bucket policy applied successfully.")
+
         except ClientError as e:
-            logger.error(e)
+            logger.error(f"Failed to apply bucket policy: {e}")
             raise
