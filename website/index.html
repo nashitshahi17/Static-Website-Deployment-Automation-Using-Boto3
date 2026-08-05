@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud & DevOps Pulse | Master Modern Infrastructure</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header & Navigation -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="#" class="logo-wrapper">
+                <!-- Replace logo.png with your own asset -->
+                <img src="logo.png" alt="Cloud & DevOps Pulse Logo" class="logo" onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';">
+                <div id="fallback-logo" class="fallback-logo" style="display:none;">
+                    <i class="fa-solid fa-cloud-bolt"></i>
+                </div>
+                <span>DevOps<span class="highlight">Pulse</span></span>
+            </a>
+            <nav class="nav-links" id="navLinks">
+                <a href="#articles">Articles</a>
+                <a href="#topics">Topics</a>
+                <a href="#resources">Resources</a>
+                <a href="#newsletter" class="btn-nav">Subscribe</a>
+            </nav>
+            <div class="hamburger" id="hamburger">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-content">
+            <span class="badge"><i class="fa-solid fa-terminal"></i> Continuous Learning & Deployment</span>
+            <h1>Scaling Infrastructure, <br>Automating the Future.</h1>
+            <p>Deep-dive tutorials, architecture patterns, and best practices in Cloud Computing, Kubernetes, CI/CD pipelines, and Infrastructure as Code.</p>
+            <div class="hero-btns">
+                <a href="#articles" class="btn btn-primary">Explore Articles <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="#topics" class="btn btn-secondary">Browse Topics</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Layout -->
+    <main class="container main-layout">
+        
+        <!-- Articles Feed -->
+        <section class="feed" id="articles">
+            <div class="section-header">
+                <h2>Latest Articles</h2>
+                <div class="filter-tags">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="kubernetes">Kubernetes</button>
+                    <button class="filter-btn" data-filter="aws">AWS</button>
+                    <button class="filter-btn" data-filter="cicd">CI/CD</button>
+                </div>
+            </div>
+
+            <div class="article-grid">
+                <!-- Article 1 -->
+                <article class="card" data-category="kubernetes">
+                    <div class="card-img-placeholder k8s">
+                        <i class="fa-solid fa-dharmachakra"></i>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <span class="tag k8s">Kubernetes</span>
+                            <span class="read-time"><i class="fa-regular fa-clock"></i> 6 min read</span>
+                        </div>
+                        <h3>Mastering GitOps with ArgoCD and Kubernetes</h3>
+                        <p>Learn how to manage cluster state declaratively using Git as the single source of truth for your deployments.</p>
+                        <div class="card-footer">
+                            <span class="author">By Alex Rivers</span>
+                            <a href="#" class="read-more">Read Article &rarr;</a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Article 2 -->
+                <article class="card" data-category="aws">
+                    <div class="card-img-placeholder aws">
+                        <i class="fa-brands fa-aws"></i>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <span class="tag aws">AWS</span>
+                            <span class="read-time"><i class="fa-regular fa-clock"></i> 8 min read</span>
+                        </div>
+                        <h3>Serverless Microservices at Scale with AWS Lambda & EventBridge</h3>
+                        <p>A comprehensive architectural breakdown of building event-driven, cost-efficient serverless systems on AWS.</p>
+                        <div class="card-footer">
+                            <span class="author">By Sarah Jenkins</span>
+                            <a href="#" class="read-more">Read Article &rarr;</a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Article 3 -->
+                <article class="card" data-category="cicd">
+                    <div class="card-img-placeholder cicd">
+                        <i class="fa-solid fa-infinity"></i>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <span class="tag cicd">CI/CD</span>
+                            <span class="read-time"><i class="fa-regular fa-clock"></i> 5 min read</span>
+                        </div>
+                        <h3>Optimizing GitHub Actions for Faster Pipeline Executions</h3>
+                        <p>Tired of waiting for builds? Discover caching strategies, self-hosted runner tips, and matrix build optimizations.</p>
+                        <div class="card-footer">
+                            <span class="author">By David Chen</span>
+                            <a href="#" class="read-more">Read Article &rarr;</a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Article 4 -->
+                <article class="card" data-category="terraform">
+                    <div class="card-img-placeholder terraform">
+                        <i class="fa-solid fa-cubes"></i>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <span class="tag terraform">Terraform</span>
+                            <span class="read-time"><i class="fa-regular fa-clock"></i> 10 min read</span>
+                        </div>
+                        <h3>Terraform Modules: Writing Reusable Infrastructure Code</h3>
+                        <p>Stop repeating yourself. Build modular, version-controlled cloud infrastructure templates for multi-environment setups.</p>
+                        <div class="card-footer">
+                            <span class="author">By Alex Rivers</span>
+                            <a href="#" class="read-more">Read Article &rarr;</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="topics">
+            <!-- Search Widget -->
+            <div class="widget search-widget">
+                <h3><i class="fa-solid fa-magnifying-glass"></i> Search Blog</h3>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search topics, tools...">
+                </div>
+            </div>
+
+            <!-- Topics Widget -->
+            <div class="widget">
+                <h3><i class="fa-solid fa-folder-open"></i> Core Topics</h3>
+                <ul class="topic-list">
+                    <li><a href="#">Cloud Architecture <span>(14)</span></a></li>
+                    <li><a href="#">Containerization & Docker <span>(9)</span></a></li>
+                    <li><a href="#">Kubernetes & Service Mesh <span>(18)</span></a></li>
+                    <li><a href="#">Infrastructure as Code (IaC) <span>(12)</span></a></li>
+                    <li><a href="#">Observability & Monitoring <span>(7)</span></a></li>
+                    <li><a href="#">DevSecOps & Security <span>(5)</span></a></li>
+                </ul>
+            </div>
+
+            <!-- Newsletter Widget -->
+            <div class="widget newsletter-widget" id="newsletter">
+                <h3><i class="fa-solid fa-paper-plane"></i> DevOps Weekly</h3>
+                <p>Get hand-picked articles, CLI tools updates, and cloud engineering tips directly in your inbox.</p>
+                <form id="newsletterForm">
+                    <input type="email" placeholder="Enter your email address" required>
+                    <button type="submit" class="btn btn-primary btn-block">Join 10,000+ Engineers</button>
+                    <span id="formMessage" class="form-msg"></span>
+                </form>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-col">
+                <a href="#" class="logo-wrapper footer-logo">
+                    <span>DevOps<span class="highlight">Pulse</span></span>
+                </a>
+                <p>Empowering cloud and DevOps engineers with deep technical insights, modern operational standards, and production-ready architectures.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Write for Us</a></li>
+                    <li><a href="#">Architecture Templates</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Connect</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fa-brands fa-github"></i></a>
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                    <a href="#"><i class="fa-brands fa-discord"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 DevOpsPulse. Built with resilient code and passion.</p>
+        </div>
+    </footer>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
