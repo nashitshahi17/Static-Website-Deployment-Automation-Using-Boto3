@@ -1,4 +1,4 @@
-from src.config import create_bucket_name
+from src.config import (create_bucket_name, get_website_endpoint )
 from src.s3_manager import S3Manager
 # import boto3
 # def main():
@@ -12,9 +12,14 @@ from src.s3_manager import S3Manager
 #         print(f"-{bucket['Name']}")
 
 def main():
-    manager = S3Manager()
     BUCKET_NAME = create_bucket_name()
+    manager = S3Manager()
     manager.create_bucket(BUCKET_NAME)
+    manager.configure_public_access(BUCKET_NAME)
+    manager.apply_public_bucket_policy(BUCKET_NAME)
+    manager.enable_static_website(BUCKET_NAME)
+    print("Website Endpoint\n")
+    print(get_website_endpoint(BUCKET_NAME))
 
 if __name__ == "__main__":
     main()
