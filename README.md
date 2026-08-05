@@ -75,8 +75,8 @@ static-site-deployer/
 │   ├── index.html
 │   ├── style.css
 │   ├── script.js
-│
-├── tests/
+|   |images/
+|    ├── logo.png
 ├── main.py
 ├── requirements.txt
 ├── README.md
