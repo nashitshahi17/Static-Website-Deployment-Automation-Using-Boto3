@@ -13,13 +13,12 @@ from src.uploader import WebsiteUploader
 #         print(f"-{bucket['Name']}")
 
 def main():
-    # BUCKET_NAME = create_bucket_name()
-    BUCKET_NAME = "static-site-5104f88b"
+    BUCKET_NAME = create_bucket_name()
     manager = S3Manager()
-    # manager.create_bucket(BUCKET_NAME)
-    # manager.configure_public_access(BUCKET_NAME)
-    # manager.apply_public_bucket_policy(BUCKET_NAME)
-    # manager.enable_static_website(BUCKET_NAME)
+    manager.create_bucket(BUCKET_NAME)
+    manager.configure_public_access(BUCKET_NAME)
+    manager.apply_public_bucket_policy(BUCKET_NAME)
+    manager.enable_static_website(BUCKET_NAME)
     uploader = WebsiteUploader(manager.s3)
     uploader.upload_directory(BUCKET_NAME,"website")
 
