@@ -1,6 +1,7 @@
 from src.config import (create_bucket_name, get_website_endpoint )
 from src.s3_manager import S3Manager
 from src.uploader import WebsiteUploader
+from src.cloudfront_manager import CloudFrontManager
 # import boto3
 # def main():
 #     s3 = boto3.client('s3')
@@ -13,17 +14,20 @@ from src.uploader import WebsiteUploader
 #         print(f"-{bucket['Name']}")
 
 def main():
-    BUCKET_NAME = create_bucket_name()
-    manager = S3Manager()
-    manager.create_bucket(BUCKET_NAME)
-    manager.configure_public_access(BUCKET_NAME)
-    manager.apply_bucket_policy(BUCKET_NAME)
-    manager.enable_static_website(BUCKET_NAME)
-    uploader = WebsiteUploader(manager.s3)
-    uploader.upload_directory(BUCKET_NAME,"website")
+    # BUCKET_NAME = create_bucket_name()
+    # manager = S3Manager()
+    # manager.create_bucket(BUCKET_NAME)
+    # manager.configure_public_access(BUCKET_NAME)
+    # manager.apply_bucket_policy(BUCKET_NAME)
+    # manager.enable_static_website(BUCKET_NAME)
+    # uploader = WebsiteUploader(manager.s3)
+    # uploader.upload_directory(BUCKET_NAME,"website")
 
-    print("Website Endpoint\n")
-    print(get_website_endpoint(BUCKET_NAME))
+    # print("Website Endpoint\n")
+    # print(get_website_endpoint(BUCKET_NAME))
+    cf = CloudFrontManager()
+    oac = cf.create_oac()
+    print(oac)
 
 if __name__ == "__main__":
     main()
