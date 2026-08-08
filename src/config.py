@@ -9,7 +9,7 @@ def create_bucket_name():
 
 def get_website_endpoint(bucket_name):
     return (
-        f"http://{bucket_name}.s3-website."
+        f"{bucket_name}.s3-website."
         f"{AWS_REGION}.amazonaws.com"
     )
 

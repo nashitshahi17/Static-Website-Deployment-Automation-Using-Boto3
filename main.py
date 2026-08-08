@@ -15,6 +15,7 @@ from src.cloudfront_manager import CloudFrontManager
 
 def main():
     # BUCKET_NAME = create_bucket_name()
+    BUCKET_NAME = "static-site-2c583ace"
     # manager = S3Manager()
     # manager.create_bucket(BUCKET_NAME)
     # manager.configure_public_access(BUCKET_NAME)
@@ -23,11 +24,20 @@ def main():
     # uploader = WebsiteUploader(manager.s3)
     # uploader.upload_directory(BUCKET_NAME,"website")
 
-    # print("Website Endpoint\n")
-    # print(get_website_endpoint(BUCKET_NAME))
-    cf = CloudFrontManager()
-    oac = cf.create_oac()
-    print(oac)
+    website_endpoint = get_website_endpoint(BUCKET_NAME)
+    print("Website Endpoint\n")
+    print(f"http://{website_endpoint}")
+
+    cloudfront_manager = CloudFrontManager()
+    distribution = cloudfront_manager.create_distribution(website_endpoint)
+    print("\nCloudFront Distribution: ")
+    print(distribution["Id"])
+
+    print("\nCloudFront Domain: ")
+    print(f"https://{distribution["DomainName"]}")
+    # cf = CloudFrontManager()
+    # oac = cf.create_oac()
+    # print(oac)
 
 if __name__ == "__main__":
     main()

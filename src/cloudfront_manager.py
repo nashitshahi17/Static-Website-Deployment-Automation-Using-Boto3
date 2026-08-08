@@ -32,4 +32,79 @@ class CloudFrontManager:
         except ClientError as e:
             logger.error(f"Failed to create OAC: {e}")
             raise
+
+    def create_distribution(self,website_endpoint):
+        try:
+            origin_id = "S3WebsiteOrigin"
+
+            distribution_config = {
+                "CallerReference": str(uuid.uuid4()),
+                "Comment": "Static Website CloudFront Distribution",
+                "Enabled": True,
+                "DefaultRootObject":"index.html",
+                "Origins":{
+                    "Quantity":1,
+                    "Items":[
+                        {
+                            "Id": origin_id,
+                            "DomainName":website_endpoint,
+                            "CustomOriginConfig":{
+                                "HTTPPort":80,
+                                "HTTPSPort":443,
+                                "OriginProtocolPolicy":"http-only"
+                            }
+                        }
+                    ]
+                },
+                "DefaultCacheBehavior":{
+                    "TargetOriginId": origin_id,
+                    "ViewerProtocolPolicy":"redirect-to-https",
+                    "AllowedMethods":{
+                        "Quantity": 2,
+                        "Items": [
+                            "GET",
+                            "HEAD"
+                        ],
+                        "CachedMethods": {
+                            "Quantity": 2,
+                            "Items": [
+                                "GET",
+                                "HEAD"
+                            ]
+                        }
+                    },
+
+                    "Compress": True,
+
+                    "ForwardedValues": {
+                        "QueryString": False,
+                        "Cookies": {
+                            "Forward": "none"
+                        }
+                    }
+                }
+            }
+            response = self.client.create_distribution(
+            DistributionConfig=distribution_config
+            )
+
+            distribution = response["Distribution"]
+
+            logger.info(
+                f"CloudFront distribution created: "
+                f"{distribution['Id']}"
+            )
+
+            return {
+                "Id": distribution["Id"],
+                "DomainName": distribution["DomainName"],
+                "Status": distribution["Status"]
+            }
+        except ClientError as e:
+            logger.error(
+                f"Failed to create CloudFront distribution: {e}"
+            )
+            raise
+
+
     
