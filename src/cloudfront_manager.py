@@ -107,4 +107,27 @@ class CloudFrontManager:
             raise
 
 
-    
+    def wait_for_deployment(self, distribution_id):
+        try:
+            logger.info(
+                f"Waiting for CloudFront distribution "
+                f"{distribution_id} to deploy..."
+            )
+
+            waiter = self.client.get_waiter(
+                "distribution_deployed"
+            )
+
+            waiter.wait(
+                Id=distribution_id
+            )
+
+            logger.info(
+                "CloudFront distribution is now deployed."
+            )
+
+        except ClientError as e:
+            logger.error(
+                f"Error while waiting for CloudFront deployment: {e}"
+            )
+            raise

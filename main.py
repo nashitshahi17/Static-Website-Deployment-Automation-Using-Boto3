@@ -30,6 +30,7 @@ def main():
 
     cloudfront_manager = CloudFrontManager()
     distribution = cloudfront_manager.create_distribution(website_endpoint)
+    cloudfront_manager.wait_for_deployment(distribution["Id"])
     print("\nCloudFront Distribution: ")
     print(distribution["Id"])
 
