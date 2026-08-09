@@ -88,3 +88,10 @@ class S3Manager:
         except ClientError as e:
             logger.error(f"Failed to apply bucket policy: {e}")
             raise
+
+    def bucket_exists(self,bucket_name):
+        try:
+            self.s3.head_bucket(Bucket = bucket_name)
+            return True
+        except ClientError:
+            return False
