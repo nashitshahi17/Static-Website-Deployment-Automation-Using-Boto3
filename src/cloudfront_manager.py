@@ -126,8 +126,24 @@ class CloudFrontManager:
                 "CloudFront distribution is now deployed."
             )
 
+            return self.get_distribution(distribution_id)
+
         except ClientError as e:
             logger.error(
                 f"Error while waiting for CloudFront deployment: {e}"
             )
+            raise
+
+    def get_distribution(self,distribution_id):
+        try:
+            response = self.client.get_distribution(Id=distribution_id)
+            distribution = response["Distribution"]
+            return {
+                "Id": distribution["Id"],
+                "ARN": distribution["ARN"],
+                "Status": distribution["Status"],
+                "DomainName": distribution["DomainName"]
+            }
+        except ClientError as e:
+            logger.error(f"Failed to retrieve CloudFront distribution: {e}")
             raise

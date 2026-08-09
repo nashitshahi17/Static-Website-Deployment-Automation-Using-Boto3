@@ -30,12 +30,13 @@ def main():
 
     cloudfront_manager = CloudFrontManager()
     distribution = cloudfront_manager.create_distribution(website_endpoint)
-    cloudfront_manager.wait_for_deployment(distribution["Id"])
+    deployed_distribution = (cloudfront_manager.wait_for_deployment(distribution["Id"]))
+    cloudfront_url = (f"https://{deployed_distribution['DomainName']}")
     print("\nCloudFront Distribution: ")
-    print(distribution["Id"])
-
-    print("\nCloudFront Domain: ")
-    print(f"https://{distribution["DomainName"]}")
+    print("----------------------------")
+    print(f"ID: {deployed_distribution["Id"]}")
+    print(f"Status: {deployed_distribution['Status']}")
+    print(f"URL: {cloudfront_url}")
     # cf = CloudFrontManager()
     # oac = cf.create_oac()
     # print(oac)
