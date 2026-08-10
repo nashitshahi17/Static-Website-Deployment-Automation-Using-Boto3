@@ -147,3 +147,67 @@ class CloudFrontManager:
         except ClientError as e:
             logger.error(f"Failed to retrieve CloudFront distribution: {e}")
             raise
+
+    def create_invalidation(self,distribution_id,paths):
+        try:
+            if not paths:
+                logger.info("No paths provided for invalidation")
+                return None
+
+            invalidation_paths = [
+                path if paths.startswith("/") else f"/{path}"
+                for path in paths
+            ]
+
+            response = self.client.create_invalidation(
+                DistributionId = distribution_id,
+                InvalidationBatch = {
+                    "Paths":{
+                        "Quantity" : len(invalidation_paths),
+                        "Items": invalidation_paths
+                    },
+                    "CallerReference": str(uuid.uuid4())
+                }
+            )
+
+            invalidation = response["Invalidation"]
+
+            logger.info(
+                f"CloudFront Invalidation created: "
+                f"{invalidation['Id']}"
+            )
+            return{
+                "Id":invalidation["Id"],
+                "Status": invalidation["Status"]
+            }
+        except ClientError as e:
+            logger.info(
+                f"Failed to create CloudFront invalidation: {e}"
+            )
+            raise
+
+    def wait_for_invalidation(self,distribution_id,invalidation_id):
+        try:
+            logger.info(
+                f"Waiting for invalidation "
+                f"{invalidation_id} to complete..."
+            )
+
+            waiter = self.client.get_waiter(
+                "invalidation_completed"
+            )
+
+            waiter.wait(
+                DistributionId=distribution_id,
+                Id=invalidation_id
+            )
+
+            logger.info(
+                "CloudFront invalidation completed."
+            )
+
+        except ClientError as e:
+            logger.error(
+                f"Failed while waiting for invalidation: {e}"
+            )
+            raise
