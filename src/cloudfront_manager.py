@@ -134,6 +134,18 @@ class CloudFrontManager:
             )
             raise
 
+    def distribution_exists(self, distribution_id):
+
+        try:
+            self.client.get_distribution(Id=distribution_id)
+            return True
+
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code")
+            if error_code == "NoSuchDistribution":
+                return False
+            raise
+
     def get_distribution(self,distribution_id):
         try:
             response = self.client.get_distribution(Id=distribution_id)
