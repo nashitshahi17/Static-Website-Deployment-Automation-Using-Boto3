@@ -223,3 +223,59 @@ class CloudFrontManager:
                 f"Failed while waiting for invalidation: {e}"
             )
             raise
+
+    def configure_custom_domain(self,distribution_id,domain_name,certificate_arn,minimum_protocol_version="TLSv1.2_2021"):
+        self.validate_custom_domain_configuration(domain_name,certificate_arn)
+
+        response = self.client.get_distribution_config(Id=distribution_id)
+
+        config = response["DistributionConfig"]
+        etag = response["ETag"]
+
+        aliases = config.get("Aliases", {})
+
+        current_items = aliases.get("Items",[])
+
+        if domain_name not in current_items:
+            current_items.append(domain_name)
+
+        config["Aliases"] = {
+            "Quantity": len(current_items),
+            "Items": current_items
+        }
+
+        config["ViewerCertificate"] = {
+            "ACMCertificateArn": certificate_arn,
+            "SSLSupportMethod": "sni-only",
+            "MinimumProtocolVersion": (
+                minimum_protocol_version
+            )
+        }
+
+        response = self.client.update_distribution(
+            Id=distribution_id,
+            IfMatch=etag,
+            DistributionConfig=config
+        )
+
+        logger.info(
+            f"Updated CloudFront distribution "
+            f"{distribution_id} with custom domain "
+            f"{domain_name}"
+        )
+
+        return response["Distribution"]
+
+    def validate_custom_domain_configuration(self,domain_name,certificate_arn):
+
+        if not domain_name:
+            raise ValueError("Custom domain is required.")
+
+        if not certificate_arn:
+            raise ValueError("ACM certificate ARN is required.")
+
+        if not certificate_arn.startswith("arn:aws:acm:us-east-1:"):
+            raise ValueError(
+                "CloudFront ACM certificates "
+                "must be in us-east-1."
+            )
