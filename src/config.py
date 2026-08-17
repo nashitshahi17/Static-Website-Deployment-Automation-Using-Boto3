@@ -2,6 +2,7 @@ import uuid
 
 AWS_REGION = "ap-south-1"
 BUCKET_NAME = "static-site"
+CUSTOM_DOMAIN = None
 
 def create_bucket_name():
     suffix = str(uuid.uuid4())[:8]
