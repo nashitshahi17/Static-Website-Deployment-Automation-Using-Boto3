@@ -22,5 +22,5 @@ class StateManager:
             self.state_file.unlink()
 
     def clear_state(self):
-        self.save_state({})
+        self.save({})
         logger.info("Deployment state cleared.")
