@@ -2,6 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 from .logger import logger
 from .cloudfront_manager import CloudFrontManager
+from .acm_manager import ACMManager
 class CleanupManager:
     def __init(self):
         self.s3 = boto3.client("s3")
@@ -13,6 +14,7 @@ class CleanupManager:
         self.route53 = boto3.client("route53")
 
         self.cloudfront_manager = CloudFrontManager()
+        self.acm_manager = ACMManager()
 
     def get_resources_from_state(self,state):
         resources = {
@@ -131,3 +133,12 @@ class CleanupManager:
         self.disable_distribution(distribution_id)
         self.cloudfront_manager.wait_for_deployment(distribution_id)
         self.delete_distribution(distribution_id)
+
+    def cleanup_acm(self,certificate_arn):
+        if not certificate_arn:
+            logger.info("No ACM certificate to clean up.")
+            return False
+
+        return self.acm_manager.delete_certificate(certificate_arn)
+
+    

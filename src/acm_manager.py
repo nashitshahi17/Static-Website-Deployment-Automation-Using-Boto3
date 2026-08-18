@@ -161,3 +161,22 @@ class ACMManager:
     def get_certificate_failure_reason(self,certificate_arn):
         certificate = self.get_certificate(certificate_arn)
         return certificate.get("FailureReason")
+
+    def delete_certificate(self,certificate_arn):
+        if not certificate_arn:
+            logger.info("No ACM certificate found in state")
+            return False
+        try:
+            self.delete_certificate(CertificateArn=certificate_arn)
+            logger.info(f"ACM certificate deleted: {certificate_arn}")
+            return True
+        except ClientError as e:
+            error_code = e.response["Error"].get("Code")
+
+            if error_code == "ResourceNotFoundException":
+                logger.info(f"ACM certificate already deleted: {certificate_arn}")
+                return True
+            logger.error(f"Failed to delete ACM certificate {certificate_arn}: {e}")
+            raise
+
+        
