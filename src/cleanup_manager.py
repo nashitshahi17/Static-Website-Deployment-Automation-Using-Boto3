@@ -6,7 +6,7 @@ from .acm_manager import ACMManager
 from .state_manager import StateManager
 
 class CleanupManager:
-    def __init(self):
+    def __init__(self):
         self.s3 = boto3.client("s3")
 
         self.cloudfront = boto3.client("cloudfront")
@@ -42,24 +42,31 @@ class CleanupManager:
 
     def delete_bucket_object(self,bucket_name):
         logger.info(f"Deleting objects from bucket: {bucket_name}")
-
-        paginator = self.s3.get_paginator("list_objects_v2")
-
         deleted_count = 0
+        try:
+            paginator = self.s3.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket = bucket_name):
+                objects = page.get("Contents",[])
+                if not objects:
+                    continue
+                object_identifiers = [
+                    {
+                        "Key": obj["Key"]
+                    }
+                    for obj in objects
+                ]
 
-        for page in paginator.paginate(Bucket = bucket_name):
-            objects = page.get("Contents",[])
-            if not objects:
-                continue
-            object_identifiers = [
-                {
-                    "Key": obj["Key"]
-                }
-                for obj in objects
-            ]
-
-            self.s3.delete_object(Bucket = bucket_name,Delete = {"Objects": object_identifiers})
-            deleted_count+=len(object_identifiers)
+                self.s3.delete_objects(Bucket = bucket_name,Delete = {"Objects": object_identifiers})
+                deleted_count+=len(object_identifiers)
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "NoSuchBucket":
+                logger.info(f"S3 Bucket {bucket_name} does not exist. Skipping.")
+                return 0
+            logger.error(
+                f"Failed to list/delete objects from bucket {bucket_name}: {e}"
+            )
+            raise   
 
         logger.info(f"Total Objects Deleted: {deleted_count}")
         return deleted_count
@@ -157,4 +164,44 @@ class CleanupManager:
         self.state_manager.clear_state()
         logger.info("Deployment state successfully cleared")
 
-    
+    def cleanup_all(self):
+        state = self.state_manager.load()
+        if not state:
+            logger.info("No deployment state found. Nothing to clean up.")
+            return
+
+        resources = self.get_resources_from_state(state)
+
+        logger.info("========== STARTING CLEANUP ==========")
+        # 1. CloudFront
+        distribution_id = resources.get("distribution_id")
+
+        if distribution_id:
+            logger.info("Cleaning up CloudFront...")
+            self.cleanup_cloudfront(distribution_id)
+
+        # 2. ACM
+        certificate_arn = resources.get("certificate_arn")
+
+        if certificate_arn:
+            logger.info("Cleaning up ACM certificate...")
+            self.cleanup_acm(certificate_arn)
+
+        # 3. Route 53
+        hosted_zone_id = resources.get("hosted_zone_id")
+        if hosted_zone_id:
+            logger.info("Cleaning up Route 53...")
+            self.cleanup_route53(hosted_zone_id)
+
+        # 4. S3
+        bucket_name = resources.get("bucket_name")
+
+        if bucket_name:
+            logger.info("Cleaning up S3...")
+            self.cleanup_s3_bucket(bucket_name)
+
+        # 5. State
+        self.clear_deployment_state()
+        logger.info("========== CLEANUP COMPLETE ==========")
+
+        
