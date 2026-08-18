@@ -1,327 +1,398 @@
 # Static Website Deployer using Boto3
 
-## Overview
+A Python-based AWS automation project that deploys a static website to Amazon S3 and distributes it through Amazon CloudFront using **Boto3**.
 
-A production-style Python automation project that deploys a static website to **Amazon S3** and serves it through **Amazon CloudFront**, using **Boto3**.
+The project was built in phases to learn AWS and Boto3 concepts through practical implementation.
 
-The project is built progressively to learn AWS and Boto3 concepts:
+> **Current implementation note:** The working deployment uses the CloudFront-provided `*.cloudfront.net` URL. No custom domain is required. ACM and Route 53 support is implemented as optional architecture/code for learning. **CloudFront Origin Access Control (OAC) is not implemented or used by the current deployment.**
+
+---
+
+## Project Goals
+
+- Automate S3 static website deployment with Boto3
+- Learn S3 bucket and object management
+- Learn CloudFront distribution automation
+- Understand ACM certificate and DNS validation concepts
+- Understand Route 53 DNS concepts
+- Track created AWS resources
+- Build safe, idempotent AWS cleanup automation
+- Practice modular Python/OOP design
+- Maintain the project through incremental Git commits
+
+---
+
+# Architecture
+
+## Current Working Architecture
 
 ```text
-Phase 1 → S3 Static Website Hosting
-Phase 2 → CloudFront CDN
-Phase 3 → ACM + Custom Domain
-Phase 4 → AWS Resource Cleanup
+                    Python CLI
+                        │
+                        ▼
+                     Boto3
+                        │
+             ┌──────────┴──────────┐
+             │                     │
+             ▼                     ▼
+        Amazon S3             CloudFront
+             │                     │
+             └─────── Origin ──────┘
+                                   │
+                                   ▼
+                         CloudFront HTTPS URL
 ```
 
-**Phase 1 and Phase 2 are completed.**
+The deployed website is accessed through:
+
+```text
+https://dxxxxxxxxxxxx.cloudfront.net
+```
+
+## Optional Custom-Domain Architecture
+
+When a real domain is available, the intended architecture is:
+
+```text
+                    User
+                     │
+                     ▼
+                  Route 53
+                     │
+                 DNS Record
+                     │
+                     ▼
+                CloudFront
+                     │
+              ACM Certificate
+                     │
+                     ▼
+                    S3
+```
+
+This custom-domain path is not required for the current project.
 
 ---
 
-## Project Status
+# Project Phases
 
-| Phase | Status | Description |
-|---|---|---|
-| Phase 1 | ✅ Completed | S3 static website deployment |
-| Phase 2 | ✅ Completed | CloudFront distribution, deployment waiting, verification and cache invalidation |
-| Phase 3 | ⏳ Upcoming | ACM certificate + custom domain |
-| Phase 4 | ⏳ Upcoming | Automated AWS resource cleanup |
+## Phase 1 — S3 Static Website Hosting
 
----
+### Completed
 
-# Phase 1 — S3 Static Website Hosting
-
-Phase 1 automates static website hosting using Amazon S3 and Boto3.
-
-### Implemented
-
-- Create an S3 bucket
-- Generate unique bucket names
+- Generate unique S3 bucket names
 - Validate bucket names
+- Create S3 bucket
 - Configure logging
-- Configure S3 Block Public Access for static website hosting
-- Enable S3 Static Website Hosting
+- Disable bucket-level Block Public Access as required by the current architecture
+- Enable S3 static website hosting
 - Recursively upload website files
 - Automatically detect MIME types
 - Apply a public-read bucket policy
-- Generate and print the S3 website endpoint
+- Print the S3 website endpoint
+- Track deployment resources in local state
 
-Example:
+Architecture:
 
 ```text
-http://<bucket-name>.s3-website-<region>.amazonaws.com
+Python
+  │
+  ▼
+Boto3
+  │
+  ▼
+S3 Bucket
+  │
+  ├── index.html
+  ├── style.css
+  ├── script.js
+  └── images/
 ```
 
 ---
 
 # Phase 2 — CloudFront
 
-Phase 2 adds **Amazon CloudFront** in front of the S3 static website.
+### Completed
 
-## Architecture
+- CloudFront distribution creation
+- S3 origin configuration
+- Default root object
+- Viewer protocol policy
+- Cache behavior configuration
+- CloudFront deployment monitoring
+- Waiting for distribution deployment
+- Cache invalidation
+- Distribution inspection
+- Custom-domain configuration methods
 
-```text
-                         Internet
-                            │
-                            │ HTTPS
-                            ▼
-                    ┌───────────────┐
-                    │  CloudFront   │
-                    │      CDN      │
-                    └───────┬───────┘
-                            │
-                            │ HTTP
-                            ▼
-                  ┌─────────────────────┐
-                  │ S3 Website Endpoint │
-                  └──────────┬──────────┘
-                             │
-                             ▼
-                       ┌───────────┐
-                       │ S3 Bucket │
-                       │           │
-                       │ index.html│
-                       │ style.css │
-                       │ script.js │
-                       └───────────┘
-```
-
-The deployment provides two endpoints:
-
-### S3 Website
+Architecture:
 
 ```text
-http://<bucket-name>.s3-website-<region>.amazonaws.com
+             Browser
+                │
+                ▼
+          CloudFront
+                │
+                ▼
+          S3 Website
 ```
 
-### CloudFront
+### Important OAC Note
 
-```text
-https://<distribution-domain>.cloudfront.net
-```
+Origin Access Control (OAC) was investigated during the learning process, but the current project **does not create, attach, or use OAC**.
 
-CloudFront provides HTTPS delivery, caching and global content distribution while S3 remains the origin.
+The current S3 origin uses the static website architecture.
 
----
-
-## Phase 2 Features
-
-### CloudFront Distribution
-
-The application creates a CloudFront distribution using Boto3.
-
-The S3 Static Website Endpoint is configured as a **custom origin**.
+A future enhancement could migrate the project to:
 
 ```text
 CloudFront
-     │
-     ▼
-CustomOriginConfig
-     │
-     ▼
-S3 Website Endpoint
-```
-
-Because the S3 website endpoint is used, the origin protocol is:
-
-```text
-http-only
-```
-
-The viewer-facing CloudFront connection uses:
-
-```text
-redirect-to-https
-```
-
-### Default Root Object
-
-CloudFront uses:
-
-```text
-index.html
-```
-
-as the default root object.
-
-### Cache Behavior
-
-The static website uses:
-
-```text
-GET
-HEAD
-```
-
-methods, with compression enabled for supported content.
-
-### Deployment Waiter
-
-CloudFront distribution creation is asynchronous. The application waits until the distribution reaches:
-
-```text
-Deployed
-```
-
-```text
-Create Distribution
-        │
-        ▼
-   InProgress
-        │
-        ▼
-Wait for Deployment
-        │
-        ▼
-     Deployed
-```
-
-### Distribution Verification
-
-The application retrieves the current CloudFront distribution information using Boto3 and tracks:
-
-- Distribution ID
-- Distribution ARN
-- Distribution status
-- CloudFront domain name
-
-### Cache Invalidation
-
-When website files are updated, CloudFront may continue serving cached objects.
-
-The application can create an invalidation and wait for it to complete:
-
-```text
-Upload new website
-        │
-        ▼
-Create Invalidation
-        │
-        ▼
-    InProgress
-        │
-        ▼
-Wait
-        │
-        ▼
-    Completed
-```
-
-The current learning deployment supports invalidating:
-
-```text
-/*
-```
-
----
-
-# Origin Access Control Exploration
-
-During Phase 2, the project also introduced **CloudFront Origin Access Control (OAC)** using Boto3.
-
-The implementation demonstrates:
-
-- Creating an Origin Access Control
-- SigV4 request signing
-- `SigningBehavior`
-- `SigningProtocol`
-- S3 origin type
-
-Conceptually:
-
-```text
-CloudFront
-     │
-     ▼
-Origin Access Control
-     │
-     │ SigV4
-     ▼
+    │
+    ▼
+   OAC
+    │
+    ▼
 Private S3 Bucket
 ```
 
-### Current Architecture vs. Secure Architecture
+---
 
-The current learning deployment intentionally uses:
+# Phase 3 — ACM + Custom Domain Architecture
+
+### ACM
+
+Implemented:
+
+- ACM client configuration
+- Certificate listing
+- Certificate inspection
+- Certificate status handling
+- Certificate lifecycle concepts
+- DNS validation record extraction
+- Certificate deletion
+- CloudFront certificate configuration support
+
+For CloudFront viewer certificates, ACM certificates must be managed in:
 
 ```text
-CloudFront
-    ↓
-S3 Website Endpoint
+us-east-1
 ```
 
-The OAC implementation is retained as an advanced architecture concept.
+### DNS Validation
 
-A production-oriented private-S3 architecture would instead use:
+ACM DNS validation uses a CNAME similar to:
 
 ```text
-CloudFront
-    ↓
-OAC
-    ↓
-Private S3 REST Endpoint
+_acm-validation.example.com
+        │
+        ▼
+_xyz.acm-validations.aws
 ```
 
-This distinction is intentional: the project first teaches S3 Static Website Hosting, then CloudFront, before evolving toward a more secure private-origin architecture.
+The validation record proves domain ownership and can support certificate renewal.
+
+### Route 53
+
+Implemented:
+
+- Hosted zone listing
+- Hosted zone inspection
+- Hosted zone lookup
+- ACM validation record construction
+- CloudFront Alias A record construction
+- DNS record deletion support
+- Hosted zone deletion support
+
+### Current Limitation
+
+No custom domain is configured.
+
+Therefore the current deployment uses:
+
+```text
+https://<distribution-id>.cloudfront.net
+```
+
+No Route 53 hosted zone, DNS record, or ACM certificate is created by the current deployment.
 
 ---
 
-# Resource State Tracking
+# Phase 4 — AWS Resource Cleanup
 
-The project includes local deployment state tracking to avoid unnecessarily creating duplicate AWS resources.
+### Completed
 
-Example state:
+- Cleanup manager
+- Dry-run mode
+- S3 object deletion
+- S3 bucket deletion
+- CloudFront distribution disabling
+- CloudFront deployment waiting
+- CloudFront distribution deletion
+- ACM certificate deletion
+- Route 53 cleanup support
+- Deployment state cleanup
+- Idempotent deletion handling
+- Explicit destructive confirmation
+- Dependency-aware cleanup orchestration
+
+## Cleanup Architecture
+
+```text
+cleanup.py
+     │
+     ├── Default mode
+     │       │
+     │       ▼
+     │    Dry Run
+     │
+     └── --execute
+             │
+             ▼
+        Confirmation
+             │
+             ▼
+       CleanupManager
+             │
+       ┌─────┼─────────────┐
+       ▼     ▼             ▼
+ CloudFront ACM          Route 53
+       │
+       ▼
+      S3
+       │
+       ▼
+ Clear State
+```
+
+## Cleanup Order
+
+```text
+1. Load deployment state
+2. Disable CloudFront
+3. Wait for CloudFront deployment
+4. Delete CloudFront distribution
+5. Delete ACM certificate if present
+6. Delete Route 53 resources if present
+7. Delete S3 objects
+8. Delete S3 bucket
+9. Clear deployment state
+```
+
+Resources that were never created are skipped.
+
+---
+
+# Safe Cleanup Design
+
+The cleanup system does not blindly delete AWS resources.
+
+It uses deployment state to identify resources created by this project.
+
+Example:
 
 ```json
 {
-    "bucket_name": "<existing-bucket>",
-    "distribution_id": "<existing-distribution>",
-    "cloudfront_domain": "<distribution-domain>"
+    "bucket_name": "static-site-example",
+    "distribution_id": "EXAMPLE123",
+    "cloudfront_domain": "dexample.cloudfront.net"
 }
 ```
 
-The state file is:
+The principle is:
 
 ```text
-deployment_state.json
+Project State
+     │
+     ▼
+Resources created by this deployment
+     │
+     ▼
+Cleanup only those resources
 ```
-
-and is excluded from Git using `.gitignore`.
-
-The state is used as a reference while AWS remains the source of truth.
 
 ---
 
-# Idempotent Deployment
+# Dry Run
 
-The project demonstrates the basic concept of **idempotent infrastructure automation**.
+Run:
 
-Instead of:
-
-```text
-Run 1 → Create Bucket + Distribution
-Run 2 → Create another Bucket + Distribution
-Run 3 → Create another Bucket + Distribution
+```bash
+python cleanup.py
 ```
 
-the intended behavior is:
+This does not delete anything.
+
+It displays the resources currently tracked by the deployment state.
+
+Example:
 
 ```text
-Run 1
-  ↓
-Create resources
-  ↓
-Save resource identifiers
+========== CLEANUP DRY RUN ==========
 
-Run 2
-  ↓
-Read state
-  ↓
-Check AWS
-  ↓
-Reuse existing resources
+bucket_name: static-site-example
+distribution_id: EXAMPLE123
+cloudfront_domain: dexample.cloudfront.net
+certificate_arn: None
+hosted_zone_id: None
+
+No AWS resources were deleted.
 ```
 
-This is a fundamental DevOps concept also used by Terraform, CloudFormation, Ansible and Kubernetes.
+# Execute Cleanup
+
+When intentionally ready to remove the project's AWS infrastructure:
+
+```bash
+python cleanup.py --execute
+```
+
+The script requires explicit confirmation before deletion.
+
+```text
+WARNING: This will delete AWS resources
+created by this project.
+
+Type 'DELETE' to continue:
+```
+
+> **Warning:** `--execute` is destructive. Always inspect the dry-run output first.
+
+---
+
+# Idempotency
+
+Cleanup operations are designed to handle resources that are already absent.
+
+```text
+First cleanup
+    │
+    ▼
+Resource exists
+    │
+    ▼
+Delete
+    │
+    ▼
+Success
+```
+
+Running cleanup again:
+
+```text
+Second cleanup
+    │
+    ▼
+Resource doesn't exist
+    │
+    ▼
+Treat as already deleted
+    │
+    ▼
+Continue
+```
+
+This is an important infrastructure automation principle.
 
 ---
 
@@ -335,11 +406,19 @@ static-site-deployer/
 │   ├── logger.py
 │   ├── validators.py
 │   ├── s3_manager.py
-│   ├── uploader.py
-│   ├── policy.py
 │   ├── cloudfront_manager.py
+│   ├── acm_manager.py
+│   ├── route53_manager.py
+│   ├── cleanup_manager.py
 │   ├── state_manager.py
-│   └── deployer.py
+│   ├── uploader.py
+│   └── policy.py
+│
+├── tests/
+│   ├── test_acm.py
+│   ├── test_route53.py
+│   ├── test_route53_records.py
+│   └── test_state_cleanup.py
 │
 ├── website/
 │   ├── index.html
@@ -349,76 +428,54 @@ static-site-deployer/
 │       └── logo.png
 │
 ├── main.py
+├── cleanup.py
 ├── requirements.txt
 ├── README.md
-└── .gitignore
+├── .gitignore
+└── deployment_state.json
 ```
+
+> `deployment_state.json` should be excluded from Git if it contains deployment-specific local state.
 
 ---
 
-# Component Responsibilities
+# Main Components
 
 ## `main.py`
 
-Application entry point. Starts the deployment orchestrator and displays final deployment information.
-
-## `deployer.py`
-
-Coordinates the deployment workflow:
-
-```text
-State
- ↓
-S3
- ↓
-Website Upload
- ↓
-CloudFront
- ↓
-Deployment Wait
- ↓
-Cache Invalidation
-```
+Application entry point that starts the deployment process.
 
 ## `s3_manager.py`
 
-Handles bucket creation, existence checks, static website configuration, public access configuration and bucket policy configuration.
+Handles S3 bucket creation, configuration, inspection, and deletion.
 
 ## `uploader.py`
 
-Handles recursive website uploads and MIME type detection.
+Handles recursive website discovery, MIME type detection, and object uploads.
 
 ## `policy.py`
 
-Contains S3 bucket policy generation/application logic.
+Generates and applies the S3 bucket policy used by the current static website architecture.
 
 ## `cloudfront_manager.py`
 
-Handles:
+Handles distribution creation, configuration, inspection, deployment waiting, cache invalidation, custom-domain configuration, disabling, and deletion.
 
-- Origin Access Control creation
-- Distribution creation
-- Distribution existence checks
-- Distribution retrieval
-- Deployment waiting
-- Cache invalidation
-- Invalidation waiting
+## `acm_manager.py`
+
+Handles ACM client operations, certificate requests/inspection, validation information, lifecycle operations, and certificate deletion.
+
+## `route53_manager.py`
+
+Handles hosted-zone inspection, DNS record construction, ACM validation record construction, CloudFront Alias record construction, DNS record deletion, and hosted-zone deletion.
+
+## `cleanup_manager.py`
+
+Orchestrates dependency-aware AWS resource cleanup.
 
 ## `state_manager.py`
 
-Handles loading, saving and clearing local deployment state.
-
-## `config.py`
-
-Contains configuration and utility functions such as bucket name generation and website endpoint generation.
-
-## `logger.py`
-
-Centralizes application logging.
-
-## `validators.py`
-
-Contains validation logic used by the application.
+Maintains local deployment state so cleanup can identify resources created by the project.
 
 ---
 
@@ -429,39 +486,76 @@ Contains validation logic used by the application.
 - Python 3.10+
 - Object-Oriented Programming
 - Exception Handling
+- Logging
 - JSON
 - pathlib
-- UUID
-- logging
+- uuid
 - mimetypes
+- argparse
 
 ### AWS
 
 - Amazon S3
 - Amazon CloudFront
+- AWS Certificate Manager
+- Amazon Route 53
 - AWS IAM
-- CloudFront Origin Access Control
-- AWS CLI
 
-### Python AWS SDK
+### SDK / Tools
 
 - Boto3
 - Botocore
+- AWS CLI
+- Git
+- GitHub
 
 ---
 
 # Prerequisites
 
-- AWS Account
-- IAM identity with required S3 and CloudFront permissions
-- AWS CLI
 - Python 3.10+
-- Python virtual environment
+- AWS account
+- AWS CLI
+- IAM identity with required permissions
+- Git
 
 Configure AWS credentials:
 
 ```bash
 aws configure
+```
+
+Verify:
+
+```bash
+aws sts get-caller-identity
+```
+
+---
+
+# Installation
+
+Clone the repository:
+
+```bash
+git clone <YOUR_GITHUB_REPOSITORY_URL>
+cd static-site-deployer
+```
+
+Create a virtual environment.
+
+### Windows
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Linux/macOS
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
 ```
 
 Install dependencies:
@@ -472,7 +566,7 @@ pip install -r requirements.txt
 
 ---
 
-# Running the Project
+# Deploy
 
 Run:
 
@@ -480,57 +574,177 @@ Run:
 python main.py
 ```
 
-The deployment flow is:
+The application will:
+
+1. Generate a unique bucket name.
+2. Validate the name.
+3. Create the S3 bucket.
+4. Configure static website hosting.
+5. Configure the required public-access settings for the current architecture.
+6. Upload website assets recursively.
+7. Detect MIME types.
+8. Apply the bucket policy.
+9. Create/configure CloudFront.
+10. Wait for CloudFront deployment.
+11. Perform cache invalidation where configured.
+12. Save deployment state.
+13. Display the CloudFront URL.
+
+---
+
+# Cleanup
+
+Preview:
+
+```bash
+python cleanup.py
+```
+
+Execute:
+
+```bash
+python cleanup.py --execute
+```
+
+Review the dry run before executing the destructive command.
+
+---
+
+# AWS Permissions
+
+Required permissions depend on which phase is being used.
+
+### S3
 
 ```text
-Load deployment state
-        │
-        ▼
-Find/Create S3 bucket
-        │
-        ▼
-Configure S3 static website
-        │
-        ▼
-Upload website
-        │
-        ▼
-Apply bucket policy
-        │
-        ▼
-Find/Create CloudFront distribution
-        │
-        ▼
-Wait for CloudFront deployment
-        │
-        ▼
-Invalidate CloudFront cache
-        │
-        ▼
-Wait for invalidation
-        │
-        ▼
-Save deployment state
-        │
-        ▼
-Display deployment URLs
+s3:CreateBucket
+s3:DeleteBucket
+s3:ListBucket
+s3:PutObject
+s3:DeleteObject
+s3:DeleteObjects
+s3:GetBucketPolicy
+s3:PutBucketPolicy
+s3:PutBucketWebsite
+s3:PutPublicAccessBlock
+```
+
+### CloudFront
+
+```text
+cloudfront:CreateDistribution
+cloudfront:GetDistribution
+cloudfront:GetDistributionConfig
+cloudfront:UpdateDistribution
+cloudfront:CreateInvalidation
+cloudfront:DeleteDistribution
+```
+
+### ACM
+
+```text
+acm:RequestCertificate
+acm:ListCertificates
+acm:DescribeCertificate
+acm:DeleteCertificate
+```
+
+### Route 53
+
+```text
+route53:ListHostedZones
+route53:ListResourceRecordSets
+route53:ChangeResourceRecordSets
+route53:DeleteHostedZone
+```
+
+For real deployments, apply the Principle of Least Privilege and restrict permissions to the resources and operations actually required.
+
+---
+
+# Security Considerations
+
+## Never hardcode AWS credentials
+
+Do not place AWS access keys or secrets in source code.
+
+Use:
+
+```bash
+aws configure
+```
+
+or IAM roles/environment-specific credential mechanisms.
+
+## Principle of Least Privilege
+
+Use the minimum IAM permissions required.
+
+## State Files
+
+Do not commit sensitive or deployment-specific state to Git.
+
+## Destructive Cleanup
+
+Always inspect:
+
+```bash
+python cleanup.py
+```
+
+before executing:
+
+```bash
+python cleanup.py --execute
 ```
 
 ---
 
-# AWS Services Used
+# Boto3 Concepts Learned
 
-### Completed
+This project was designed as a hands-on Boto3 learning exercise.
 
-- Amazon S3
-- Amazon CloudFront
-- AWS IAM
-- AWS CLI
+### Clients
 
-### Upcoming
+```python
+boto3.client("s3")
+boto3.client("cloudfront")
+boto3.client("acm", region_name="us-east-1")
+boto3.client("route53")
+```
 
-- AWS Certificate Manager (ACM)
-- Amazon Route 53
+### AWS Regions
+
+```text
+S3          → Regional
+ACM         → Regional
+CloudFront  → Global
+Route 53    → Global
+```
+
+CloudFront viewer certificates are managed through ACM in `us-east-1`.
+
+### Exceptions
+
+```python
+from botocore.exceptions import ClientError
+```
+
+### Paginators
+
+Used when AWS APIs can return results across multiple pages.
+
+### Waiters / Polling
+
+CloudFront deployments can take time, so the project waits for required AWS states.
+
+### ETags
+
+CloudFront update/delete operations use the current configuration ETag.
+
+### Idempotency
+
+Cleanup safely handles resources that are already absent.
 
 ---
 
@@ -540,210 +754,189 @@ Display deployment URLs
 
 - Buckets
 - Objects
-- Static Website Hosting
+- Object keys
+- Static website hosting
 - Bucket policies
 - Public access configuration
-- Resource-based permissions
-- Website endpoints
 - MIME types
-- Object uploads
+- Regional endpoints
 
 ## CloudFront
 
-- Distributions
-- Origins
-- Custom origins
-- Cache behaviors
-- Viewer protocol policies
-- Default root objects
-- CDN caching
+- Distribution
+- Origin
+- Cache behavior
+- Viewer protocol policy
+- Default root object
+- Deployment states
 - Cache invalidation
-- Distribution deployment states
-- CloudFront domain names
-- Origin Access Control
-- SigV4 request signing
+- Custom domains
+- Viewer certificates
 
-## Boto3
+## ACM
 
-- AWS service clients
-- API calls
-- AWS response parsing
-- Waiters
-- ClientError handling
-- Resource state verification
-- Resource creation
-- Resource reuse
-- JSON-based local state management
-
----
-
-# Engineering Concepts Demonstrated
-
-- Separation of concerns
-- Service wrapper classes
-- Deployment orchestration
-- Idempotent automation
-- Resource state tracking
-- Exception handling
-- Logging
-- Git-based incremental development
-- AWS resource lifecycle management
-- Asynchronous AWS operations
-- CDN cache management
-
----
-
-# Security Notes
-
-- Never hardcode AWS credentials.
-- Use AWS CLI profiles, IAM roles or environment-based credentials.
-- Follow the Principle of Least Privilege.
-- Do not commit AWS credentials.
-- Do not commit `.env` files.
-- Do not commit `deployment_state.json`.
-- Do not commit virtual environments.
-- Review S3 public access configuration carefully.
-- The current S3 Website + CloudFront architecture intentionally uses a public S3 website endpoint for learning.
-- For a production-oriented secure architecture, use CloudFront Origin Access Control with a private S3 bucket.
-
----
-
-# Cost Awareness
-
-AWS resources created by this project can incur charges depending on usage and account configuration.
-
-Be especially careful with:
-
-- CloudFront distributions
-- CloudFront invalidations
-- S3 storage and requests
-- Data transfer
-
-Do not repeatedly execute deployment scripts that create new infrastructure.
-
-Before creating resources, verify the current AWS resources and deployment state.
-
-Phase 4 will introduce automated cleanup.
-
----
-
-# Future Phases
-
-## Phase 3 — ACM + Custom Domain
-
-Planned architecture:
-
-```text
-Custom Domain
-      │
-      ▼
-ACM Certificate
-      │
-      ▼
-CloudFront
-      │
-      ▼
-S3
-```
-
-Topics:
-
-- AWS Certificate Manager
+- TLS/SSL certificates
+- Certificate ARN
 - DNS validation
-- Route 53
-- CloudFront viewer certificates
-- Alternate domain names
-- HTTPS
+- Certificate states
+- Certificate lifecycle
+- CloudFront certificate requirements
+
+## Route 53
+
+- Hosted zones
 - DNS records
-- ACM regional requirements for CloudFront
+- CNAME
+- A records
+- Alias records
+- ACM validation
+- Domain → CloudFront routing
 
-## Phase 4 — Automated Cleanup
+## IAM
 
-The cleanup script will identify and delete resources created by the project.
+- Permissions
+- Least privilege
+- AWS credential provider chain
 
-Planned dependency-aware cleanup:
+---
 
-```text
-CloudFront
-     ↓
-ACM / Route 53 configuration
-     ↓
-S3
-```
+# What Is Not Implemented
 
-The cleanup process will account for AWS resource dependencies so resources can be removed safely.
+The following are intentionally not part of the current deployed architecture:
+
+- Purchasing a domain
+- Custom-domain deployment
+- Actual ACM certificate issuance for a real domain
+- Actual Route 53 DNS configuration
+- CloudFront Origin Access Control
+- Private S3 origin using OAC
+
+These are future enhancements rather than claims about the current deployment.
 
 ---
 
 # Future Improvements
 
-- CLI arguments using `argparse`
-- Configuration files
-- Environment-specific deployments
-- Changed-file detection
-- Selective CloudFront invalidation
-- File versioning
-- Unit tests
+- Private S3 bucket with CloudFront Origin Access Control
+- Full custom-domain deployment
+- Automatic ACM DNS validation through Route 53
+- Route 53 Alias record creation
+- HTTPS-only custom-domain deployment
+- More robust resource state tracking
+- Unit tests with mocked AWS APIs
 - Integration tests
+- Multi-environment configuration
 - GitHub Actions CI
-- Automated deployment workflows
-- Better AWS error classification
-- Retry and backoff handling
-- Dry-run mode
-- Deployment reports
-- Production-style private S3 + CloudFront OAC architecture
+- Structured JSON logging
+- Retry/backoff handling
+- Improved rollback and recovery mechanisms
 
 ---
 
 # Learning Outcomes
 
-After completing the project, you will understand how to:
-
-- Automate AWS infrastructure using Boto3
-- Create and configure S3 buckets programmatically
-- Host static websites on S3
-- Upload website files recursively
-- Configure bucket policies
-- Build CloudFront distributions
-- Configure CloudFront origins
-- Configure cache behavior
-- Wait for asynchronous AWS operations
-- Retrieve and verify AWS resource state
-- Invalidate CloudFront caches
-- Track infrastructure state
-- Build idempotent deployment automation
-- Use Origin Access Control
-- Configure HTTPS with ACM
-- Connect custom domains through Route 53
-- Safely clean up AWS resources
+```text
+Python
+  │
+  ├── OOP
+  ├── Exceptions
+  ├── Logging
+  ├── JSON
+  ├── pathlib
+  ├── argparse
+  └── Modular design
+        │
+        ▼
+Boto3
+  │
+  ├── Clients
+  ├── Paginators
+  ├── AWS errors
+  ├── Waiters / polling
+  ├── ETags
+  └── Resource lifecycle
+        │
+        ▼
+AWS
+  │
+  ├── S3
+  ├── CloudFront
+  ├── ACM
+  ├── Route 53
+  └── IAM
+```
 
 ---
 
-# Development Philosophy
+# Git Development Strategy
 
-This project is intentionally built incrementally.
+The project was developed incrementally.
+
+Every meaningful milestone followed:
 
 ```text
-Phase 1
-S3 Fundamentals
-      │
-      ▼
-Phase 2
-CloudFront + CDN
-      │
-      ▼
-Phase 3
-HTTPS + Custom Domain
-      │
-      ▼
-Phase 4
-Resource Cleanup
+Implement
+   ↓
+Test
+   ↓
+Review
+   ↓
+git diff
+   ↓
+Commit
+   ↓
+Push
+   ↓
+Next milestone
 ```
 
-The objective is not only to build the application, but to understand **why each AWS service, API, configuration and architectural decision is being used**.
+This keeps the Git history understandable and provides working checkpoints throughout development.
+
+---
+
+# Final Project Status
+
+```text
+PHASE 1 — S3 Static Website Hosting
+████████████████████ 100%
+
+PHASE 2 — CloudFront
+████████████████████ 100%
+
+PHASE 3 — ACM + Custom Domain Architecture
+████████████████████ 100%
+
+PHASE 4 — Resource Cleanup
+████████████████████ 100%
+```
+
+## Overall
+
+```text
+S3 Deployment              ✅
+Static Website Hosting     ✅
+CloudFront                 ✅
+Cache Invalidation         ✅
+ACM Management             ✅
+Route 53 Support           ✅
+Cleanup Automation         ✅
+Dry Run                    ✅
+Idempotent Cleanup         ✅
+Deployment State           ✅
+Custom Domain              ⏳ Requires real domain
+OAC                        ⏳ Future enhancement
+```
 
 ---
 
 # License
 
-This project is intended for learning, experimentation and portfolio purposes.
+This project is intended for educational, portfolio, and learning purposes.
+
+---
+
+# Author
+
+**Nashit Shahi**
+
+Built as a hands-on AWS and Boto3 learning project.
