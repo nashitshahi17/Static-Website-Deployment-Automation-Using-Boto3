@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from .logger import logger
 
 class StateManager:
     def __init__(self,state_file="deployment_state.json"):
@@ -19,3 +20,7 @@ class StateManager:
     def clear(self):
         if self.state_file.exists():
             self.state_file.unlink()
+
+    def clear_state(self):
+        self.save_state({})
+        logger.info("Deployment state cleared.")

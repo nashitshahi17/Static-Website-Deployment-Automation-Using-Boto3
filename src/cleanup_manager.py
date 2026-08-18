@@ -3,6 +3,8 @@ from botocore.exceptions import ClientError
 from .logger import logger
 from .cloudfront_manager import CloudFrontManager
 from .acm_manager import ACMManager
+from .state_manager import StateManager
+
 class CleanupManager:
     def __init(self):
         self.s3 = boto3.client("s3")
@@ -14,7 +16,10 @@ class CleanupManager:
         self.route53 = boto3.client("route53")
 
         self.cloudfront_manager = CloudFrontManager()
+
         self.acm_manager = ACMManager()
+
+        self.state_manager = StateManager()
 
     def get_resources_from_state(self,state):
         resources = {
@@ -147,5 +152,9 @@ class CleanupManager:
             return False
 
         return self.route53.delete_hosted_zone(hosted_zone_id)
+
+    def clear_deployment_state(self):
+        self.state_manager.clear_state()
+        logger.info("Deployment state successfully cleared")
 
     
