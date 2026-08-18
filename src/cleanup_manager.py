@@ -1,7 +1,7 @@
 import boto3
 from botocore.exceptions import ClientError
 from .logger import logger
-
+from .cloudfront_manager import CloudFrontManager
 class CleanupManager:
     def __init(self):
         self.s3 = boto3.client("s3")
@@ -11,6 +11,8 @@ class CleanupManager:
         self.acm = boto3.client("acm",region_name = "us-east-1")
 
         self.route53 = boto3.client("route53")
+
+        self.cloudfront_manager = CloudFrontManager()
 
     def get_resources_from_state(self,state):
         resources = {
@@ -103,7 +105,7 @@ class CleanupManager:
 
         logger.info("Waiting for CloudFront distribution to finish disabling.")
 
-        self.wait_for_deployment(distribution_id)
+        self.cloudfront_manager.wait_for_deployment(distribution_id)
 
         return True
         
