@@ -60,3 +60,70 @@ class Route53Manager:
                 "EvaluatedTargetHealth": False
             }
         }
+
+    def delete_record(self,hosted_zone_id,record):
+        if not hosted_zone_id:
+            logger.info("No hosted zone ID provided.")
+            return False
+        
+        if not record:
+            logger.info("No DNS record provided.")
+            return False
+
+        try:
+            self.client.change_resource_record_sets(
+                HostedZoneId=hosted_zone_id,
+                ChangeBatch={
+                    "Changes": [
+                        {
+                            "Action": "DELETE",
+                            "ResourceRecordSet": record
+                        }
+                    ]
+                }
+            )
+
+            logger.info(f"Deleted DNS record: {record['Name']}")
+
+            return True
+
+        except ClientError as e:
+
+            error_code = e.response["Error"].get("Code")
+
+            if error_code == "InvalidChangeBatch":
+
+                logger.info(f"DNS record may already be deleted: {record.get('Name')}")
+
+                return True
+
+            logger.error(
+                f"Failed to delete DNS record: {e}")
+            raise
+
+    def delete_hosted_zone(self,hosted_zone_id):
+
+        if not hosted_zone_id:
+            logger.info("No hosted zone ID provided.")
+            return False
+
+        try:
+
+            self.client.delete_hosted_zone(Id=hosted_zone_id)
+
+            logger.info(f"Hosted zone deleted: {hosted_zone_id}")
+
+            return True
+
+        except ClientError as e:
+
+            error_code = e.response["Error"].get("Code")
+
+            if error_code == "NoSuchHostedZone":
+
+                logger.info(f"Hosted zone already deleted: {hosted_zone_id}")
+
+                return True
+
+            logger.error(f"Failed to delete hosted zone {hosted_zone_id}: {e}")
+            raise

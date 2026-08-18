@@ -141,4 +141,11 @@ class CleanupManager:
 
         return self.acm_manager.delete_certificate(certificate_arn)
 
+    def cleanup_route53(self,hosted_zone_id):
+        if not hosted_zone_id:
+            logger.info("No Route 53 hosted zone to clean up.")
+            return False
+
+        return self.route53.delete_hosted_zone(hosted_zone_id)
+
     
