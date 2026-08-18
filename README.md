@@ -412,13 +412,14 @@ static-site-deployer/
 │   ├── cleanup_manager.py
 │   ├── state_manager.py
 │   ├── uploader.py
-│   └── policy.py
+│   |── policy.py
+|   └── deployer.py
+|  
 │
 ├── tests/
 │   ├── test_acm.py
 │   ├── test_route53.py
 │   ├── test_route53_records.py
-│   └── test_state_cleanup.py
 │
 ├── website/
 │   ├── index.html
