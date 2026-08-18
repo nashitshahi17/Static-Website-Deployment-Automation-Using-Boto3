@@ -19,7 +19,6 @@ class CleanupManager:
             "cloudfront_domain": state.get("cloudfront_domain"),
             "Certificate_arn": state.get("certificate_arn"),
             "hosted_zone_id": state.get("hosted_zone_id"),
-            "oac_id": state.get("oac_id")
         }
         return resources
 
@@ -63,6 +62,10 @@ class CleanupManager:
             logger.info(f"S3 bucket deleted: {bucket_name}")
             return True
         except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "NoSuchBucket":
+                logger.info(f"S3 Bucket already deleted: {bucket_name}")
+                return True
             logger.error(f"Failed to delete S3 bucket: {bucket_name}: {e}")
             raise
 
