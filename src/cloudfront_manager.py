@@ -8,30 +8,30 @@ class CloudFrontManager:
     def __init__(self):
         self.client = boto3.client('cloudfront')
 
-    def create_oac(self):
-        try:
-            response = self.client.create_origin_access_control(
-                OriginAccessControlConfig={
-                    "Name": f"static-site-oac-{uuid.uuid4().hex[:8]}",
-                    "Description": "Origin Access Control for Static Website",
-                    "SigningProtocol": "sigv4",
-                    "SigningBehavior": "always",
-                    "OriginAccessControlOriginType": "s3"
-                }
-            )
+    # def create_oac(self):
+    #     try:
+    #         response = self.client.create_origin_access_control(
+    #             OriginAccessControlConfig={
+    #                 "Name": f"static-site-oac-{uuid.uuid4().hex[:8]}",
+    #                 "Description": "Origin Access Control for Static Website",
+    #                 "SigningProtocol": "sigv4",
+    #                 "SigningBehavior": "always",
+    #                 "OriginAccessControlOriginType": "s3"
+    #             }
+    #         )
 
-            oac = response["OriginAccessControl"]
+    #         oac = response["OriginAccessControl"]
 
-            logger.info("Origin Access Control created successfully.")
+    #         logger.info("Origin Access Control created successfully.")
 
-            return {
-                "Id": oac["Id"],
-                "ETag": response["ETag"]
-            }
+    #         return {
+    #             "Id": oac["Id"],
+    #             "ETag": response["ETag"]
+    #         }
 
-        except ClientError as e:
-            logger.error(f"Failed to create OAC: {e}")
-            raise
+    #     except ClientError as e:
+    #         logger.error(f"Failed to create OAC: {e}")
+    #         raise
 
     def create_distribution(self,website_endpoint):
         try:
