@@ -108,4 +108,26 @@ class CleanupManager:
         self.cloudfront_manager.wait_for_deployment(distribution_id)
 
         return True
-        
+
+    def delete_distribution(self,distribution_id):
+        if not distribution_id:
+            logger.info("No CloudFront distribution found.")
+            return False
+        try:
+            response = self.client.get_distribution_config(Id=distribution_id)
+            etag = response["ETag"]
+            self.client.delete_distribution(Id=distribution_id,IfMatch=etag)
+            logger.info(f"CloudFront distribution {distribution_id} deleted.")
+            return True
+        except ClientError as e:
+            error_code = e.response["Error"].get("Code")
+            if error_code == "NoSuchDistribution":
+                logger.info(f"CloudFront distribution {distribution_id} already deleted.")
+                return True
+            logger.error(f"Failed to delete CloudFront distribution {distribution_id}: {e}")
+            raise
+
+    def cleanup_cloudfront(self,distribution_id):
+        self.disable_distribution(distribution_id)
+        self.cloudfront_manager.wait_for_deployment(distribution_id)
+        self.delete_distribution(distribution_id)
