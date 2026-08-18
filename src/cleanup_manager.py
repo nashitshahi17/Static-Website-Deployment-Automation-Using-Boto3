@@ -76,4 +76,34 @@ class CleanupManager:
         self.delete_bucket_object(bucket_name)
         return self.delete_bucket(bucket_name)
 
-    
+    def disable_distribution(self,distribution_id):
+        if not distribution_id:
+            logger.info("No CloudFront distribution found in state")
+            return False
+        try:
+            response = self.cloudfront.get_distribution_config(Id=distribution_id)
+            config = response["DistributionConfig"]
+            etag = response["ETag"]
+            if not config["Enabled"]:
+                logger.info(f"CloudFront Distribution {distribution_id} is already disabled")
+                return True
+            config["Enabled"] = True
+            self.cloudfront.update_distribution(Id=distribution_id,ifMatch=etag,DistributionConfig=config)
+            logger.info(f"CloudFront distribution {distribution_id} is being disabled")
+            return True
+        except ClientError as e:
+            logger.error(f"Failed to disable CloudFront distribution {distribution_id}: {e}")
+            raise
+
+    def cleanup_cloudfront(self,distribution_id):
+        if not distribution_id:
+            logger.info("No CloudFront distribution found in state.")
+            return False
+        self.disable_distribution(distribution_id)
+
+        logger.info("Waiting for CloudFront distribution to finish disabling.")
+
+        self.wait_for_deployment(distribution_id)
+
+        return True
+        
