@@ -31,3 +31,46 @@ class CleanupManager:
             else:
                 logger.info(f"{resource}: None")
         logger.info("No AWS Resources were deleted")
+
+    def delete_bucket_object(self,bucket_name):
+        logger.info(f"Deleting objects from bucket: {bucket_name}")
+
+        paginator = self.s3.get_paginator("list_objects_v2")
+
+        deleted_count = 0
+
+        for page in paginator.paginate(Bucket = bucket_name):
+            objects = page.get("Contents",[])
+            if not objects:
+                continue
+            object_identifiers = [
+                {
+                    "Key": obj["Key"]
+                }
+                for obj in objects
+            ]
+
+            self.s3.delete_object(Bucket = bucket_name,Delete = {"Objects": object_identifiers})
+            deleted_count+=len(object_identifiers)
+
+        logger.info(f"Total Objects Deleted: {deleted_count}")
+        return deleted_count
+
+    def delete_bucket(self,bucket_name):
+        logger.info(f"Deleting S3 bucket: {bucket_name}")
+        try:
+            self.s3.delete_bucket(Bucket = bucket_name)
+            logger.info(f"S3 bucket deleted: {bucket_name}")
+            return True
+        except ClientError as e:
+            logger.error(f"Failed to delete S3 bucket: {bucket_name}: {e}")
+            raise
+
+    def cleanup_s3_bucket(self,bucket_name):
+        if not bucket_name:
+            logger.info("No S3 Bucket found in state")
+            return False
+        self.delete_bucket_object(bucket_name)
+        return self.delete_bucket(bucket_name)
+
+    
